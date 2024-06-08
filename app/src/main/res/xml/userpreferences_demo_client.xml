@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/client_settings">
+        <ListPreference
+            app:defaultValue="https://trusty-bfh.com:8443"
+            app:dialogTitle="@string/demo_backend_url"
+            app:entries="@array/demo_backend_url"
+            app:entryValues="@array/demo_backend_url"
+            app:key="demo_backend_url"
+            app:summary="%s"
+            app:title="@string/select_demo_backend_url" />
+    </PreferenceCategory>
+</PreferenceScreen>

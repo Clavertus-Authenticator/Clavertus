@@ -1,0 +1,7 @@
+# Custom detekt configuration file
+complexity:
+  TooManyFunctions:
+    thresholdInClasses: 20
+style:
+  MaxLineLength:
+    excludeCommentStatements: true

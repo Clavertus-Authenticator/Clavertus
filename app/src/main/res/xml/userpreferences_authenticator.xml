@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/key_settings">
+        <ListPreference
+            app:defaultValue="EC"
+            app:dialogTitle="@string/key_type"
+            app:entries="@array/key_types"
+            app:entryValues="@array/key_types"
+            app:key="key_type"
+            app:summary="%s"
+            app:title="@string/select_key_type" />
+        <ListPreference
+            app:defaultValue="secp256r1"
+            app:dialogTitle="@string/elliptic_curve_type"
+            app:entries="@array/ec_type"
+            app:entryValues="@array/ec_type"
+            app:key="ec_curve"
+            app:summary="%s"
+            app:title="@string/select_ec_type" />
+        <ListPreference
+            app:defaultValue="2048"
+            app:dialogTitle="@string/rsa_key_length"
+            app:entries="@array/rsa_key_length"
+            app:entryValues="@array/rsa_key_length"
+            app:key="rsa_key_length"
+            app:summary="%s"
+            app:title="@string/select_rsa_key_length" />
+    </PreferenceCategory>
+    <PreferenceCategory app:title="@string/keystore_settings">
+        <CheckBoxPreference
+            app:defaultValue="false"
+            app:key="strong_box_required"
+            app:summary="@string/choose_hw_keys"
+            app:title="@string/keys_in_hw" />
+        <ch.bfh.clavertus.authenticator.utils.CheckBoxPreferenceWarnUserAuthentication
+            app:defaultValue="true"
+            app:key="user_authentication_required"
+            app:summary="@string/user_has_to_authenticate"
+            app:title="@string/user_authentication_required" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="demo_backend_url">
+        <item>https://trusty-bfh.com:8443</item>
+        <item>https://localhost:8443</item>
+    </string-array>
+    <!-- Arrays for settings-page like APC-Demo -->
+    <string-array name="key_types">
+        <item>EC</item>
+        <item>RSA</item>
+    </string-array>
+    <string-array name="ec_type">
+        <item>secp256r1</item>
+    </string-array>
+    <string-array name="rsa_key_length">
+        <!--Just 2048 supported: https://fidoalliance.org/specs/fido-security-requirements/fido-authenticator-allowed-cryptography-list-v1.4-fd-20211102.html#key-protection-algorithms-->
+        <item>2048</item>
+    </string-array>
+    <string-array name="cert_validity_options">
+        <item>1 day</item>
+        <item>1 year</item>
+        <item>2 years</item>
+        <item>3 years</item>
+        <item>5 years</item>
+        <item>10 years</item>
+    </string-array>
+    <string-array name="cert_validity_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <!-- End -->
+
+</resources>

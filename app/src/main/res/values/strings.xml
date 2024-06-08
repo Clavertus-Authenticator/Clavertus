@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">Clavertus</string>
+    <string name="bt1_register">Register at server</string>
+    <string name="bt2_authenticate">Authenticate at server</string>
+    <string name="transaction_confirmation_at_server">Transaction confirmation at server</string>
+    <string name="username">JohnDoe</string>
+    <string name="usernameLabel">Username:</string>
+    <string name="deregister_at_server">Deregister at server</string>
+
+    <string name="client_settings">Client Settings</string>
+    <string name="select_demo_backend_url">Select Demo Backend URL</string>
+    <string name="demo_backend_url">Demo Backend URL</string>
+
+    <!-- String for settings-page like APC-Demo -->
+    <string name="key_settings">Key settings</string>
+    <string name="key_type">Key Type</string>
+    <string name="elliptic_curve_type">Elliptic Curve Type</string>
+    <string name="select_ec_type">Select EC Type</string>
+    <string name="select_key_type">Select the key type</string>
+    <string name="select_rsa_key_length">Select the RSA key length</string>
+    <string name="rsa_key_length">RSA Key Length</string>
+    <string name="validity_period">Validity period</string>
+    <string name="cert_validity">Validity period of the certificate</string>
+    <string name="certificate_settings">Certificate Settings</string>
+    <string name="settings">Settings</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="keystore_settings">Keystore settings</string>
+    <string name="keys_in_hw">Keys in Hardware</string>
+    <string name="choose_hw_keys">Choose to generate the key in HW if available.</string>
+    <string name="user_authentication_required">User Authentication Required</string>
+    <string name="user_has_to_authenticate">The user has to authenticate for each key operation.</string>
+    <string name="unlocked_device_required">Unlocked Device Required</string>
+    <string name="device_has_to_be_unlocked">The device has to be unlocked for any key operation.</string>
+    <string name="fido_authenticator">FIDO Authenticator</string>
+    <string name="scan_qr_code">Scan QR code</string>
+    <string name="client_demo">Client demo</string>
+    <string name="authenticator">Authenticator</string>
+    <string name="fido_client_demo">FIDO client demo</string>
+    <string name="show_keys">Show keys</string>
+    <string name="key_storage">Key storage</string>
+    <string name="rp">RP:</string>
+    <string name="username_row">Username:</string>
+    <string name="properties">Properties:</string>
+    <string name="webauthn_io">webauthn.io</string>
+    <string name="johndoe">JohnDoe</string>
+    <string name="delete">Delete</string>
+    <string name="manage_keys">Manage keys</string>
+
+    <!-- End -->
+</resources>

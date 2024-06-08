@@ -1,0 +1,97 @@
+image: eclipse-temurin:17-jdk-jammy
+
+stages:
+  - build
+  - test
+  - publish
+  - cleanup
+
+variables:
+  ANDROID_COMPILE_SDK: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_CLI_TOOLS:   "11076708"
+
+before_script:
+  - apt-get --quiet update --yes
+  - apt-get --quiet install --yes wget unzip curl jq
+  - export ANDROID_HOME="${PWD}/android-sdk-root"
+  - install -d $ANDROID_HOME
+  - wget --no-verbose --output-document=$ANDROID_HOME/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CLI_TOOLS}_latest.zip
+  - unzip -q -d "$ANDROID_HOME/cmdline-tools" "$ANDROID_HOME/cmdline-tools.zip"
+  - mv -T "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/tools"
+  - export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/tools/bin
+  - sdkmanager --version
+  - yes | sdkmanager --licenses > /dev/null || true
+  - sdkmanager "platforms;android-${ANDROID_COMPILE_SDK}"
+  - sdkmanager "platform-tools"
+  - sdkmanager "cmdline-tools;latest"
+  - sdkmanager "build-tools;${ANDROID_BUILD_TOOLS}"
+  - chmod +x ./gradlew
+
+lint:
+  stage: build
+  script:
+    - ./gradlew -Pci --console=plain :app:lintDebug -PbuildDir=lint
+  artifacts:
+    paths:
+      - app/lint/reports/lint-results-debug.html
+    expire_in: 1 week
+
+detekt:
+  stage: build
+  script:
+    - ./gradlew -Pci --console=plain :app:detektMain :app:detektTest
+
+assemble:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  artifacts:
+    paths:
+      - app/build/outputs/
+    expire_in: 1 week
+  only:
+    - main
+
+test:
+  needs: [lint, detekt]
+  stage: test
+  script:
+    - ./gradlew -Pci --console=plain :app:testDebug
+
+publish:
+  stage: publish
+  variables:
+    SECURE_FILES_DOWNLOAD_PATH: './'
+  script:
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - ./gradlew assembleRelease
+    - export DATETIME=$(date +%Y%m%d-%H%M)
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --upload-file app/build/outputs/apk/release/app-release.apk \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ch.bfh.clavertus/${CI_COMMIT_REF_NAME}/app-release-${DATETIME}.apk"
+  only:
+    - main
+
+cleanup_apks:
+  stage: cleanup
+  script:
+    - apk_package_name="ch.bfh.clavertus"
+    - |
+      PACKAGE_ID=$(curl --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages?package_name=${apk_package_name}" | jq '.[0].id')
+      ASSETS_TO_DELETE=$(curl --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${PACKAGE_ID}/package_files" | jq '[.[] | {id: .id, created_at: .created_at}] | sort_by(.created_at) | .[:-5] | .[].id')
+      for ID in ${ASSETS_TO_DELETE[@]}; do
+        curl --request DELETE --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${PACKAGE_ID}/package_files/${ID}"
+      done
+  only:
+    - main
+
+# For merge request builds we don't want to store the apk
+
+assembleMR:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  except:
+    - main

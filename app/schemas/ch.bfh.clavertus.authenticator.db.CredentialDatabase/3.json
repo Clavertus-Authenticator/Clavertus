@@ -1,0 +1,140 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "01d5d87cb3c9876b66d947d78fdc42ee",
+    "entities": [
+      {
+        "tableName": "credentials",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rpId` TEXT NOT NULL, `userIDFromRP` BLOB NOT NULL, `userName` TEXT NOT NULL, `userDisplayName` TEXT NOT NULL, `requiresAuthentication` INTEGER NOT NULL, `isPasskey` INTEGER NOT NULL, `roomUid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id` BLOB NOT NULL, `keyPairAlias` TEXT NOT NULL, `keyUseCounter` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rpId",
+            "columnName": "rpId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userIDFromRP",
+            "columnName": "userIDFromRP",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userName",
+            "columnName": "userName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userDisplayName",
+            "columnName": "userDisplayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiresAuthentication",
+            "columnName": "requiresAuthentication",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPasskey",
+            "columnName": "isPasskey",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "roomUid",
+            "columnName": "roomUid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keyPairAlias",
+            "columnName": "keyPairAlias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keyUseCounter",
+            "columnName": "keyUseCounter",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "roomUid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_credentials_rpId",
+            "unique": false,
+            "columnNames": [
+              "rpId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_credentials_rpId` ON `${TABLE_NAME}` (`rpId`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "links",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`roomUid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `linkId` BLOB NOT NULL, `linkSecret` BLOB NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "roomUid",
+            "columnName": "roomUid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkId",
+            "columnName": "linkId",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkSecret",
+            "columnName": "linkSecret",
+            "affinity": "BLOB",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "roomUid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_links_linkId",
+            "unique": false,
+            "columnNames": [
+              "linkId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_links_linkId` ON `${TABLE_NAME}` (`linkId`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '01d5d87cb3c9876b66d947d78fdc42ee')"
+    ]
+  }
+}
