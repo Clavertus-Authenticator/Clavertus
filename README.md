@@ -11,10 +11,6 @@ Clavertus is an open-source FIDO authenticator for Android that implements the C
 It aims to provide a secure and straightforward authentication experience. 
 Clavertus is particularly suited for individuals who prioritize privacy and want to maintain control over their data.
 
-## APK
-
-Get the latest version from the [Package Registry](https://gitlab.ti.bfh.ch/bathesis-2024/clavertus/-/packages/1799).
-
 ## Requirements
 
 - Java 17
