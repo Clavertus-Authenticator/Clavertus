@@ -10,7 +10,7 @@ plugins {
 }
 
 detekt {
-    toolVersion = "1.23.6"
+    toolVersion = "1.23.7"
     config.setFrom(file("../config/detekt/detekt.yml"))
     buildUponDefaultConfig = true
     autoCorrect = true
