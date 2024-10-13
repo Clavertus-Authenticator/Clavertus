@@ -1,0 +1,124 @@
+name: Android CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  ANDROID_COMPILE_SDK: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_CLI_TOOLS: "11076708"
+  ANDROID_HOME: ${{ github.workspace }}/android-sdk-root
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq wget unzip curl jq
+          mkdir -p $ANDROID_HOME
+          wget -qO $ANDROID_HOME/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${{ env.ANDROID_CLI_TOOLS }}_latest.zip
+          unzip -q -d "$ANDROID_HOME/cmdline-tools" "$ANDROID_HOME/cmdline-tools.zip"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/tools"
+          echo "export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/tools/bin" >> $GITHUB_ENV
+          sdkmanager --version
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-${{ env.ANDROID_COMPILE_SDK }}"
+          sdkmanager "platform-tools"
+          sdkmanager "cmdline-tools;latest"
+          sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS }}"
+          chmod +x ./gradlew
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run lint
+        run: |
+          ./gradlew -Pci --console=plain :app:lintDebug -PbuildDir=lint
+      - name: Upload lint results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-results
+          path: app/lint/reports/lint-results-debug.html
+
+  detekt:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Detekt
+        run: |
+          ./gradlew -Pci --console=plain :app:detektMain :app:detektTest
+
+  assemble:
+    needs: [lint, detekt]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Assemble debug APK
+        run: |
+          ./gradlew assembleDebug
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: apk
+          path: app/build/outputs/
+
+  test:
+    needs: assemble
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run tests
+        run: |
+          ./gradlew -Pci --console=plain :app:testDebug
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download secure installer script
+        run: |
+          curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+
+      - name: Assemble release APK
+        run: |
+          ./gradlew assembleRelease
+          DATETIME=$(date +%Y%m%d-%H%M)
+          curl --header "JOB-TOKEN: $GITHUB_TOKEN" \
+            --upload-file app/build/outputs/apk/release/app-release.apk \
+            "${{ github.api_url }}/repos/${{ github.repository }}/releases"
+
+  cleanup_apks:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old APKs
+        run: |
+          apk_package_name="ch.bfh.clavertus"
+          PACKAGE_ID=$(curl --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases" | jq '.[0].id')
+          ASSETS_TO_DELETE=$(curl --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases/${PACKAGE_ID}" | jq '[.[] | {id: .id, created_at: .created_at}] | sort_by(.created_at) | .[:-5] | .[].id')
+          for ID in ${ASSETS_TO_DELETE[@]}; do
+            curl --request DELETE --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases/assets/${ID}"
+          done
