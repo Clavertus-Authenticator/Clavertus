@@ -1,41 +1,22 @@
-name: Android CI Pipeline
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+name: Generated APK AAB (Upload - Create Artifact To Github Action)
 
 env:
-  ANDROID_COMPILE_SDK: "34"
-  ANDROID_BUILD_TOOLS: "34.0.0"
-  ANDROID_CLI_TOOLS: "11076708"
-  ANDROID_HOME: ${{ github.workspace }}/android-sdk-root
+  # The name of the main module repository
+  main_project_module: app
+
+  # The name of the Play Store
+  playstore_name: Clavertus
+
+on:
+
+  push:
+    branches:
+      - 'main'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qq wget unzip curl jq
-          mkdir -p $ANDROID_HOME
-          wget -qO $ANDROID_HOME/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${{ env.ANDROID_CLI_TOOLS }}_latest.zip
-          unzip -q -d "$ANDROID_HOME/cmdline-tools" "$ANDROID_HOME/cmdline-tools.zip"
-          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/tools"
-          echo "export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/tools/bin" >> $GITHUB_ENV
-          sdkmanager --version
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-${{ env.ANDROID_COMPILE_SDK }}"
-          sdkmanager "platform-tools"
-          sdkmanager "cmdline-tools;latest"
-          sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS }}"
-          chmod +x ./gradlew
-
   lint:
     needs: setup
     runs-on: ubuntu-latest
@@ -63,62 +44,70 @@ jobs:
         run: |
           ./gradlew -Pci --console=plain :app:detektMain :app:detektTest
 
-  assemble:
-    needs: [lint, detekt]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  build:
 
-      - name: Assemble debug APK
-        run: |
-          ./gradlew assembleDebug
-      - name: Upload APK artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Set Current Date As Env Variable
+      - name: Set current date as env variable
+        run: echo "date_today=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      # Set Repository Name As Env Variable
+      - name: Set repository name as env variable
+        run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
+      # Run Tests Build
+      - name: Run gradle tests
+        run: ./gradlew test
+
+      # Run Build Project
+      - name: Build gradle project
+        run: ./gradlew build
+
+      # Create APK Debug
+      - name: Build apk debug project (APK) - ${{ env.main_project_module }} module
+        run: ./gradlew assembleDebug
+
+      # Create APK Release
+      - name: Build apk release project (APK) - ${{ env.main_project_module }} module
+        run: ./gradlew assemble
+
+      # Create Bundle AAB Release
+      # Noted for main module build [main_project_module]:bundleRelease
+      - name: Build app bundle release (AAB) - ${{ env.main_project_module }} module
+        run: ./gradlew ${{ env.main_project_module }}:bundleRelease
+
+      # Upload Artifact Build
+      # Noted For Output [main_project_module]/build/outputs/apk/debug/
+      - name: Upload APK Debug - ${{ env.repository_name }}
         uses: actions/upload-artifact@v3
         with:
-          name: apk
-          path: app/build/outputs/
+          name: ${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - APK(s) debug generated
+          path: ${{ env.main_project_module }}/build/outputs/apk/debug/
 
-  test:
-    needs: assemble
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # Noted For Output [main_project_module]/build/outputs/apk/release/
+      - name: Upload APK Release - ${{ env.repository_name }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - APK(s) release generated
+          path: ${{ env.main_project_module }}/build/outputs/apk/release/
 
-      - name: Run tests
-        run: |
-          ./gradlew -Pci --console=plain :app:testDebug
-
-  publish:
-    if: github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Download secure installer script
-        run: |
-          curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
-
-      - name: Assemble release APK
-        run: |
-          ./gradlew assembleRelease
-          DATETIME=$(date +%Y%m%d-%H%M)
-          curl --header "JOB-TOKEN: $GITHUB_TOKEN" \
-            --upload-file app/build/outputs/apk/release/app-release.apk \
-            "${{ github.api_url }}/repos/${{ github.repository }}/releases"
-
-  cleanup_apks:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete old APKs
-        run: |
-          apk_package_name="ch.bfh.clavertus"
-          PACKAGE_ID=$(curl --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases" | jq '.[0].id')
-          ASSETS_TO_DELETE=$(curl --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases/${PACKAGE_ID}" | jq '[.[] | {id: .id, created_at: .created_at}] | sort_by(.created_at) | .[:-5] | .[].id')
-          for ID in ${ASSETS_TO_DELETE[@]}; do
-            curl --request DELETE --header "JOB-TOKEN: $GITHUB_TOKEN" "${{ github.api_url }}/repos/${{ github.repository }}/releases/assets/${ID}"
-          done
+      # Noted For Output [main_project_module]/build/outputs/bundle/release/
+      - name: Upload AAB (App Bundle) Release - ${{ env.repository_name }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - App bundle(s) AAB release generated
+          path: ${{ env.main_project_module }}/build/outputs/bundle/release/
