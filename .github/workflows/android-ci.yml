@@ -7,6 +7,10 @@ env:
   # The name of the Play Store
   playstore_name: Clavertus
 
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  KEYSTORE_BASE_64: ${{ secrets.KEYSTORE_BASE_64 }}
+
 on:
 
   push:
@@ -57,7 +61,6 @@ jobs:
         run: |
           ./gradlew -Pci --console=plain :app:detektMain :app:detektTest
 
-  # ToDo: Not yet working
   build:
 
     runs-on: ubuntu-latest
@@ -82,6 +85,11 @@ jobs:
 
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
+
+      - name: Decode Keystore
+        run: |
+          echo $KEYSTORE_BASE_64 > keystore-b64.txt
+          base64 -d keystore-b64.txt > keystore.jks
 
       # Run Tests Build
       - name: Run gradle tests
