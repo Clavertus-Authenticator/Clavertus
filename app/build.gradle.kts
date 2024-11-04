@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-video:1.3.4")
     implementation("androidx.camera:camera-view:1.4.0")
-    implementation("androidx.camera:camera-extensions:1.3.4")
+    implementation("androidx.camera:camera-extensions:1.4.0")
 
     // Formatting
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
