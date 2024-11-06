@@ -19,7 +19,7 @@ detekt {
 
 android {
     namespace = "ch.bfh.clavertus"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "ch.bfh.clavertus"
