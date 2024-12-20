@@ -108,7 +108,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("io.mockk:mockk:1.13.14")
 
     // Android Testing
     androidTestImplementation("io.mockk:mockk-android:1.13.13")
